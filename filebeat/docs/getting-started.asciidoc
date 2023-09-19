@@ -148,6 +148,34 @@ include::{libbeat-dir}/tab-widgets/setup-widget.asciidoc[]
 +
 `-e` is optional and sends output to standard error instead of the configured log output.
 
+[TIP]
+=====
+
+If the command above gives **Exiting: couldn't connect to any of the configured Elasticsearch hosts** error,
+https://discuss.elastic.co/t/filebeat-exiting-couldnt-connect-to-any-of-the-configured-elasticsearch-hosts/297997/2[on 8.0 TLS is enabled by default, so we need to set the `ca_trusted_fingerprint` on our output configuration as well as enable SSL:
+
+[source,yml]
+----------------------------------------------------------------------------------------------
+output.elasticsearch:
+  hosts: ["https://myEShost:9200"]
+  username: "elastic"
+  password: "MY_PASSWORD"
+  ssl:
+    enabled: true
+    ca_trusted_fingerprint: "b9a10bbe64ee9826abeda6546fc988c8bf798b41957c33d05db736716513dc9c"
+----------------------------------------------------------------------------------------------
+
+The fingerprint https://ugosan.org/using-ca-trusted-fingerprint/[can be obtained by]
+
+[source,bash]
+-------------------------------------------------------------------------------------------------------
+openssl x509 -in /etc/elasticsearch/certs/http_ca.crt -sha256 -fingerprint | grep SHA256 | sed 's/://g'
+-------------------------------------------------------------------------------------------------------
+
+Note that the certificate is at `/etc/elasticsearch/certs/`[https://qubitpi.github.io/elasticsearch/configuring-stack-security.html#_connect_clients_to_elasticsearch_5]
+
+=====
+
 This step loads the recommended {ref}/index-templates.html[index template] for writing to {es}
 and deploys the sample dashboards for visualizing the data in {kib}.
 
