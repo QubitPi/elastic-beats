@@ -41,16 +41,28 @@ jobs:
           cd ..
           git clone https://github.com/QubitPi/elastic-docs.git
       - name: Build docs
+        continue-on-error: true
         run: |
+          : # \/home\/runner\/work\/elastic-beats\/elastic-beats = ${{ github.workspace }}
+          sed -i -e 's/\:beats-root\:/\:beats-root\: \/home\/runner\/work\/elastic-beats\/elastic-beats/g' filebeat/docs/index.asciidoc
+
           cd ../elastic-docs
-          : # https://github.com/elastic/docs/blob/master/doc_build_aliases.sh#L151
-          ./build_docs --respect_edit_url_overrides --doc ../elastic-beats/libbeat/docs/index.asciidoc --chunk 1
+          : # build beat docs - https://github.com/elastic/docs/blob/master/doc_build_aliases.sh#L151
+          : # ./build_docs --respect_edit_url_overrides --doc ../elastic-beats/libbeat/docs/index.asciidoc --chunk 1
+
+          # build filebeat docs - https://github.com/QubitPi/elastic-beats/pull/3
+          ./build_docs --respect_edit_url_overrides \
+            --doc ../elastic-beats/filebeat/docs/index.asciidoc \
+            --resource=../elastic-beats/x-pack/filebeat/docs \
+            --extra_docker_vol_mount=${{ github.workspace }}:${{ github.workspace }} \
+            --out html_docs \
+            --chunk 1
       - name: Deploy docs to GitHub Pages
         if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ../elastic-docs/html_docs
+          publish_dir: ../elastic-docs/html_docs/raw
           enable_jekyll: false
           user_name: ${{ env.USER }}
           user_email: ${{ env.EMAIL }}
